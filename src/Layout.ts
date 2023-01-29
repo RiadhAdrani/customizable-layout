@@ -1,8 +1,8 @@
 import { createElement } from "@riadh-adrani/dom-control-js";
-import TabGroup, { Tab, TabEvents } from "./TabGroup";
+import TabGroup, { Tab, TabGroupEvents } from "./Tab/TabGroup";
 import { calculateSide, useId } from "./Utils";
 
-export interface LayoutEvents extends TabEvents {
+export interface LayoutEvents extends TabGroupEvents {
   onUnknownDropped: (ev: DragEvent) => Tab | void;
   onTabDropped?: (tab: Tab) => {};
 }
@@ -265,11 +265,11 @@ export default class Layout {
               return;
             }
 
-            org?.group.removeTab(tab.id);
+            org?.group.remove(tab.id);
 
             switch (side) {
               case "center": {
-                this.group!.addTab(tab);
+                this.group!.add(tab);
                 break;
               }
               case "right": {
@@ -289,7 +289,7 @@ export default class Layout {
                 break;
               }
               default: {
-                this.group!.addTab(tab);
+                this.group!.add(tab);
               }
             }
           }

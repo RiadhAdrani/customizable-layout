@@ -1,34 +1,7 @@
 import "./style.css";
 import { createElement } from "@riadh-adrani/dom-control-js";
-import Layout from "./Layout";
-import { v4 as useId } from "uuid";
+import TabGroup from "./Tab/TabGroup";
 
-const tabs = () => [
-  { element: () => createElement("div", { children: "Tab One" }), id: useId(), title: "One" },
-  { element: () => createElement("div", { children: "Tab Two" }), id: useId(), title: "Two" },
-];
+const tab = new TabGroup([{ element: () => createElement("div"), id: "id", title: "Tab Title" }]);
 
-const sl1 = new Layout(tabs(), { events: { onUnknownDropped() {} } });
-
-const sl2 = new Layout(
-  [
-    new Layout(tabs(), { events: { onUnknownDropped() {} } }),
-    new Layout(tabs(), { events: { onUnknownDropped() {} } }),
-  ],
-  {
-    events: { onUnknownDropped() {} },
-    isRow: false,
-  }
-);
-
-const layout = new Layout([sl1, sl2], {
-  events: { onUnknownDropped() {} },
-});
-
-document.querySelector(".draggable-btn")!.addEventListener("dragstart", (event) => {
-  const e = event as DragEvent;
-  e.dataTransfer?.clearData();
-  e.dataTransfer?.setData("text/plain", JSON.stringify({ id: useId(), title: "New Tab" }));
-});
-
-document.querySelector<HTMLDivElement>("#app")!.appendChild(layout.render());
+document.querySelector<HTMLDivElement>("#app")!.appendChild(tab.render());

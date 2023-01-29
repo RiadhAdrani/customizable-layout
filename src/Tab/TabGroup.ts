@@ -1,11 +1,11 @@
 import { createElement, setAttribute } from "@riadh-adrani/dom-control-js";
 import { clamp } from "@riadh-adrani/utility-js";
-import Layout from "./Layout";
-import { useId } from "./Utils";
+import Layout from "../Layout";
+import { useId } from "../Utils";
 
 export const tabSymbol = Symbol.for("tab");
 
-export interface TabEvents {
+export interface TabGroupEvents {
   onBeforeTabToggle?: (tab: Tab, group: TabGroup) => void;
   onTabToggled?: (tab: Tab, group: TabGroup) => void;
   onBeforeTabRemove?: (tab: Tab, group: TabGroup) => void;
@@ -18,6 +18,10 @@ export interface Tab {
   element: () => Element;
   title: string;
   id: string;
+  onBeforeMount?: (group: TabGroup) => void;
+  onMounted?: (group: TabGroup) => void;
+  onBeforeUnmount?: (group: TabGroup) => void;
+  onUnmounted?: (group: TabGroup) => void;
 }
 
 export default class TabGroup {
@@ -26,24 +30,35 @@ export default class TabGroup {
   activeId?: string;
   element: Element = null as unknown as Element;
   parent?: Layout;
-  events?: TabEvents;
+  events?: TabGroupEvents;
 
-  constructor(items: Array<Tab> = [], events: TabEvents = {}) {
+  constructor(items: Array<Tab> = [], events: TabGroupEvents = {}) {
     this.items = items;
     this.events = events;
   }
 
-  toggleTab(id: string) {
+  get contentElement(): HTMLElement {
+    return this.element.querySelector(".tab-group-content")!;
+  }
+
+  get currentTab(): Tab {
+    return this.items.find((tab) => tab.id === this.activeId)!;
+  }
+
+  toggle(id: string) {
     const contentWrapper = this.element.querySelector(".tab-group-content")!;
 
     if (this.activeId === id) {
       return;
     }
 
+    const currentTab = this.items.find((item) => item.id === this.activeId)!;
     const newTab = this.items.find((item) => item.id === id);
 
     if (newTab) {
       this.events?.onBeforeTabToggle?.(newTab, this);
+      newTab.onBeforeMount?.(this);
+      currentTab?.onBeforeUnmount?.(this);
 
       this.activeId = id;
 
@@ -64,34 +79,36 @@ export default class TabGroup {
       setAttribute("data-active", true, newActiveTabButton);
 
       this.events?.onTabToggled?.(newTab, this);
+      newTab.onMounted?.(this);
+      currentTab.onUnmounted?.(this);
     }
   }
 
-  removeTab(id: string): number {
+  remove(id: string): number {
     if (!this.doExist(id)) {
       return this.items.length;
     }
 
     const tab = this.items.find((item) => item.id === id)!;
 
-    this.events?.onBeforeTabRemove?.(tab, this);
+    const newItems = this.items.filter((item) => item.id !== id);
 
-    this.items = this.items.filter((item) => item.id !== id);
-
-    if (this.items.length === 0) {
+    if (newItems.length === 0) {
       this.onEmptied();
-    } else {
-      this.toggleTab(this.items[0].id);
+    } else if (this.activeId === id) {
+      this.toggle(newItems[0].id);
     }
 
-    this.element.querySelector(`#tab-group-btn-${id}`)!.remove();
+    this.items = newItems;
 
+    this.events?.onBeforeTabRemove?.(tab, this);
+    this.element.querySelector(`#tab-group-btn-${id}`)!.remove();
     this.events?.onTabRemoved?.(tab, this);
 
     return this.items.length;
   }
 
-  addTab(item: Tab, position: number = Infinity): number {
+  add(item: Tab, position: number = Infinity): number {
     if (this.doExist(item.id)) {
       throw `Tab with id (${item.id}) already exists !`;
     }
@@ -108,15 +125,11 @@ export default class TabGroup {
 
     tabs.insertBefore(this.createTabButton(item, false), addBtn);
 
-    this.toggleTab(item.id);
+    this.toggle(item.id);
 
     this.events?.onTabAdded?.(item, this);
 
     return this.items.length;
-  }
-
-  emptyContent() {
-    this.element.querySelector(".tab-group-content")!.innerHTML = "";
   }
 
   onEmptied() {
@@ -131,20 +144,24 @@ export default class TabGroup {
     return id === this.activeId;
   }
 
+  getTabButtonById(id: string): HTMLElement {
+    return this.element.querySelector(`#tab-group-btn-${id}`)!;
+  }
+
   createTabButton(item: Tab, active: boolean): Element {
     return createElement("button", {
       children: [item.title],
       attributes: {
         class: "tab-group-btn",
         id: `tab-group-btn-${item.id}`,
-        "data-active": active,
         draggable: "true",
+        "data-active": active,
       },
       events: {
-        onclick: () => this.toggleTab(item.id),
+        onclick: () => this.toggle(item.id),
         oncontextmenu: (e) => {
           e.preventDefault();
-          this.removeTab(item.id);
+          this.remove(item.id);
         },
         ondragstart: (e) => {
           const ev = e as DragEvent;
@@ -168,13 +185,7 @@ export default class TabGroup {
 
     const content: Array<Element> = this.items
       .filter((item) => this.isActive(item.id))
-      .map((item) => {
-        const child = item.element();
-
-        setAttribute("id", item.id, child);
-
-        return child;
-      });
+      .map((item) => item.element());
 
     const el = createElement("div", {
       attributes: {
@@ -198,7 +209,7 @@ export default class TabGroup {
                     title: "Random Tab",
                   };
 
-                  this.addTab(tab);
+                  this.add(tab);
                 },
               },
             }),
