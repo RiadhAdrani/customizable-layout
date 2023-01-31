@@ -1,28 +1,32 @@
 import { createElement } from "@riadh-adrani/dom-control-js";
-import TabGroup, { Tab, TabGroupEvents } from "./Tab/TabGroup";
-import { calculateSide, useId } from "./Utils";
+import TabGroup, { Tab, TabGroupEvents } from "../Tab/TabGroup";
+import { calculateSide, useId } from "../Utils";
 
 export interface LayoutEvents extends TabGroupEvents {
-  onUnknownDropped: (ev: DragEvent) => Tab | void;
+  onUnknownDropped?: (ev: DragEvent) => Tab | void;
   onTabDropped?: (tab: Tab) => {};
 }
 
 export interface LayoutParams {
   isRow?: boolean;
   parent?: Layout;
-  events: LayoutEvents;
+  events?: LayoutEvents;
 }
 
 const sides = ["top", "left", "bottom", "right", "center"];
 
 export default class Layout {
   id: string = useId();
-  group?: TabGroup = null as unknown as TabGroup;
-  items: Array<Layout | Tab> = [];
+  group?: TabGroup;
+  items: Array<Layout> = [];
   isRow = true;
-  events: LayoutEvents;
+  events?: LayoutEvents;
   element: Element = null as unknown as Element;
   parent?: Layout;
+
+  get isUpmostParent(): boolean {
+    return this.upmostParent === this;
+  }
 
   get upmostParent(): Layout {
     if (!this.parent) return this;
@@ -34,31 +38,37 @@ export default class Layout {
     return this.element.querySelector(".custom-layout-hover")!;
   }
 
-  get forLayouts(): boolean {
-    return !this.group && this.items.every((item) => item instanceof Layout);
+  get forLayout(): boolean {
+    return !this.group && this.items.length > 0;
   }
 
-  constructor(items: Array<Tab | Layout>, params: LayoutParams) {
-    this.items = items;
-    this.events = params.events;
-    this.isRow = params.isRow ?? true;
-    this.parent = params.parent ?? undefined;
+  constructor(items: Array<Tab | Layout>, params?: LayoutParams) {
+    this.events = params?.events;
+    this.isRow = params?.isRow ?? true;
+    this.parent = params?.parent ?? undefined;
 
-    if (this.items.every((item) => item instanceof Layout)) {
+    if (items.every((item) => item instanceof Layout)) {
+      this.items = items as Array<Layout>;
       this.items.forEach((item) => ((item as Layout).parent = this));
+
+      // TODO : deal with the case of one layout
     } else {
-      this.group = new TabGroup(this.items as Array<Tab>, this.events);
+      this.group = new TabGroup(items as Array<Tab>, this.events);
       this.group.parent = this;
       this.items = [];
     }
   }
 
   findTab(id: string): { tab: Tab; group: TabGroup } | null {
-    if (!this.forLayouts) {
-      if (this.group!.doExist(id)) {
-        const $tab = this.group!.items.find((t) => t.id === id)!;
+    if (!this.forLayout) {
+      if (!this.group) {
+        throw `Unexpected state: Layout does not contain a tab group.`;
+      }
 
-        return { tab: $tab, group: this.group! };
+      if (this.group.doExist(id)) {
+        const $tab = this.group.items.find((t) => t.id === id)!;
+
+        return { tab: $tab, group: this.group };
       }
     }
 
@@ -79,20 +89,46 @@ export default class Layout {
     this.element.replaceWith(this.render());
   }
 
-  transformTo(row: boolean) {
-    if (this.forLayouts) return;
+  toLayoutGroup(row: boolean) {
+    if (!this.forLayout) {
+      const tabGroup = this.group!;
+      this.group = undefined;
+      this.isRow = row;
 
-    const tabGroup = this.group;
-    this.group = undefined;
-    this.isRow = row;
-    this.items = [new Layout(tabGroup!.items, { events: this.events, parent: this, isRow: row })];
+      const newLayout = new Layout(tabGroup.items, {
+        events: this.events,
+        parent: this,
+        isRow: row,
+      });
+
+      this.items = [newLayout];
+    } else {
+      this.isRow = row;
+    }
+  }
+
+  toTabGroup() {
+    if (this.items.length !== 1) {
+      throw `Unable to transform layout to tab group : Layout has 0 or 2+ more sub layouts`;
+    }
+
+    this.group = (this.items[0] as Layout)?.group;
+    this.group!.parent = this;
+    this.items = [];
+    this.isRow = true;
+
+    this.reBuild();
   }
 
   addLayout(tabs: Array<Tab>, before: boolean, row: boolean) {
-    if (this.parent) {
-      const newLayout = new Layout(tabs, { events: this.events, parent: this.parent });
+    if (tabs.length === 0) {
+      throw "Unable to add a new layout with no tabs.";
+    }
 
+    if (this.parent) {
       if (this.parent.isRow === row) {
+        const newLayout = new Layout(tabs, { events: this.events, parent: this.parent });
+
         const index = this.parent.items.indexOf(this) + (before ? 0 : 1);
 
         this.parent.items = [
@@ -101,7 +137,9 @@ export default class Layout {
           ...this.parent.items.slice(index),
         ];
       } else {
-        this.transformTo(row);
+        const newLayout = new Layout(tabs, { events: this.events, parent: this });
+
+        this.toLayoutGroup(row);
 
         if (before) {
           this.items.unshift(newLayout);
@@ -114,6 +152,8 @@ export default class Layout {
     } else {
       const newLayout = new Layout(tabs, { events: this.events, parent: this });
 
+      this.toLayoutGroup(row);
+
       if (before) {
         this.items.unshift(newLayout);
       } else {
@@ -124,23 +164,10 @@ export default class Layout {
     }
   }
 
-  transformToTabGroup() {
-    if (this.items.length > 1) {
-      throw `Unable to transform layout to group : Layout has 2 or more sub layouts`;
-    }
-
-    this.group = (this.items[0] as Layout).group;
-    this.group!.parent = this;
-    this.items = [];
-    this.isRow = true;
-
-    this.reBuild();
-  }
-
   updateParenthood(parent?: Layout) {
     this.parent = parent;
 
-    if (this.forLayouts) {
+    if (this.forLayout) {
       (this.items as Array<Layout>).forEach((item) => item.updateParenthood(this));
     } else {
       this.group!.parent = this;
@@ -148,7 +175,7 @@ export default class Layout {
   }
 
   removeLayout(id: string) {
-    if (!this.forLayouts) return;
+    if (!this.forLayout) return;
 
     if (!this.items.some((layout) => layout.id === id)) {
       throw `Layout with id "${id}" does not exist !`;
@@ -160,14 +187,14 @@ export default class Layout {
     if (this.items.length === 1) {
       const item = this.items[0] as Layout;
 
-      if (item.forLayouts) {
+      if (item.forLayout) {
         this.items = item.items;
         this.isRow = item.isRow;
 
         this.updateParenthood(this.parent);
       } else {
         // ? if one is remaining, we transform to a tab group
-        this.transformToTabGroup();
+        this.toTabGroup();
       }
     }
 
@@ -175,10 +202,62 @@ export default class Layout {
   }
 
   onTabGroupEmptied() {
-    if (this.forLayouts) return;
+    if (this.forLayout) return;
     if (!this.parent) return;
 
     this.parent.removeLayout(this.id);
+  }
+
+  onDrop(side: string, data: string, event: DragEvent) {
+    const parsed = JSON.parse(data ?? "") as Record<string, string>;
+    const org = this.upmostParent.findTab(parsed.id);
+
+    let tab: Tab | null = null;
+
+    if (!org) {
+      const $tab = this.events?.onUnknownDropped?.(event);
+
+      if ($tab) {
+        tab = $tab;
+      }
+    } else {
+      tab = org.tab;
+    }
+
+    if (tab) {
+      // ? if org.id === this.id and the number of tabs is 1 we don't do anything;
+      if (org!.group.id === this.group!.id && this.group!.items.length === 1) {
+        return;
+      }
+
+      org?.group.remove(tab.id);
+
+      switch (side) {
+        case "center": {
+          this.group!.add(tab);
+          break;
+        }
+        case "right": {
+          this.addLayout([tab], false, true);
+          break;
+        }
+        case "left": {
+          this.addLayout([tab], true, true);
+          break;
+        }
+        case "top": {
+          this.addLayout([tab], true, false);
+          break;
+        }
+        case "bottom": {
+          this.addLayout([tab], false, false);
+          break;
+        }
+        default: {
+          this.group!.add(tab);
+        }
+      }
+    }
   }
 
   render(): Element {
@@ -191,7 +270,7 @@ export default class Layout {
         class: "custom-layout-container",
         style: `
         background-color: #2d2d2d;
-        padding: ${this.forLayouts ? "0px" : "10px"};
+        padding: ${this.forLayout ? "0px" : "10px"};
         border-radius: 10px;
         display: flex;
         flex-direction:${this.isRow ? "row" : "column"};
@@ -202,7 +281,7 @@ export default class Layout {
       events: {
         ondrag: (ev) => ev.preventDefault(),
         ondragover: (ev) => {
-          if (this.forLayouts) {
+          if (this.forLayout) {
             return;
           }
 
@@ -221,7 +300,7 @@ export default class Layout {
           }
         },
         ondragleave: (ev) => {
-          if (this.forLayouts) {
+          if (this.forLayout) {
             return;
           }
 
@@ -231,7 +310,7 @@ export default class Layout {
           sides.forEach((side) => target.classList.remove(`custom-layout-container-${side}`));
         },
         ondrop: (ev) => {
-          if (this.forLayouts) {
+          if (this.forLayout) {
             return;
           }
 
@@ -244,59 +323,12 @@ export default class Layout {
 
           const side = calculateSide(ev as DragEvent);
           const data = (ev as DragEvent).dataTransfer?.getData("text");
-          const parsed = JSON.parse(data ?? "") as Record<string, string>;
-          const org = this.upmostParent.findTab(parsed.id);
 
-          let tab: Tab | null = null;
-
-          if (!org) {
-            const $tab = this.events.onUnknownDropped(ev as DragEvent);
-
-            if ($tab) {
-              tab = $tab;
-            }
-          } else {
-            tab = org.tab;
-          }
-
-          if (tab) {
-            // ? if org.id === this.id and the number of tabs is 1 we don't do anything;
-            if (org!.group.id === this.group!.id && this.group!.items.length === 1) {
-              return;
-            }
-
-            org?.group.remove(tab.id);
-
-            switch (side) {
-              case "center": {
-                this.group!.add(tab);
-                break;
-              }
-              case "right": {
-                this.addLayout([tab], false, true);
-                break;
-              }
-              case "left": {
-                this.addLayout([tab], true, true);
-                break;
-              }
-              case "top": {
-                this.addLayout([tab], true, false);
-                break;
-              }
-              case "bottom": {
-                this.addLayout([tab], false, false);
-                break;
-              }
-              default: {
-                this.group!.add(tab);
-              }
-            }
-          }
+          this.onDrop(side, data ?? "", ev as DragEvent);
         },
       },
       children: [
-        ...(this.forLayouts ? layouts() : [this.group!.render()]),
+        ...(this.forLayout ? layouts() : [this.group!.render()]),
         createElement("div", {
           attributes: { class: "custom-layout-hover" },
           events: { ondrag: (e) => e.preventDefault() },

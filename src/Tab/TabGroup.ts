@@ -1,9 +1,9 @@
 import { createElement, setAttribute } from "@riadh-adrani/dom-control-js";
 import { clamp } from "@riadh-adrani/utility-js";
-import Layout from "../Layout";
+import Layout from "../Layout/Layout";
 import { useId } from "../Utils";
 
-export const tabSymbol = Symbol.for("tab");
+export const TabSymbol = Symbol.for("tab");
 
 export interface TabGroupEvents {
   onBeforeTabToggle?: (tab: Tab, group: TabGroup) => void;
@@ -52,7 +52,7 @@ export default class TabGroup {
       return;
     }
 
-    const currentTab = this.items.find((item) => item.id === this.activeId)!;
+    const currentTab = this.items.find((item) => item.id === this.activeId);
     const newTab = this.items.find((item) => item.id === id);
 
     if (newTab) {
@@ -80,7 +80,7 @@ export default class TabGroup {
 
       this.events?.onTabToggled?.(newTab, this);
       newTab.onMounted?.(this);
-      currentTab.onUnmounted?.(this);
+      currentTab?.onUnmounted?.(this);
     }
   }
 
@@ -102,7 +102,7 @@ export default class TabGroup {
     this.items = newItems;
 
     this.events?.onBeforeTabRemove?.(tab, this);
-    this.element.querySelector(`#tab-group-btn-${id}`)!.remove();
+    this.element.querySelector(`#tab-group-btn-${id}`)?.remove();
     this.events?.onTabRemoved?.(tab, this);
 
     return this.items.length;
@@ -133,7 +133,7 @@ export default class TabGroup {
   }
 
   onEmptied() {
-    // this.parent?.onTabGroupEmptied();
+    this.parent?.onTabGroupEmptied();
   }
 
   doExist(id: string): boolean {
@@ -169,7 +169,7 @@ export default class TabGroup {
 
           const data = {
             id: item.id,
-            __symbol__: tabSymbol.description,
+            __symbol__: TabSymbol.description,
           };
 
           ev.dataTransfer?.setData("text/plain", JSON.stringify(data));
