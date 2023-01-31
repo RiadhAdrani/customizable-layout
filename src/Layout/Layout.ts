@@ -265,7 +265,7 @@ export default class Layout {
       return (this.items as Array<Layout>).map((item) => item.render());
     };
 
-    this.element = createElement("div", {
+    this.element = createElement<HTMLElement>("div", {
       attributes: {
         class: "custom-layout-container",
         style: `
@@ -279,7 +279,7 @@ export default class Layout {
         `,
       },
       events: {
-        ondrag: (ev) => ev.preventDefault(),
+        ondrag: (ev: Event) => ev.preventDefault(),
         ondragover: (ev) => {
           if (this.forLayout) {
             return;
@@ -289,7 +289,7 @@ export default class Layout {
           ev.preventDefault();
 
           const target = ev.currentTarget as HTMLElement;
-          const side = calculateSide(ev as DragEvent);
+          const side = calculateSide(ev as unknown as DragEvent);
 
           sides
             .filter((s) => s !== side)
@@ -321,10 +321,10 @@ export default class Layout {
 
           sides.forEach((side) => target.classList.remove(`custom-layout-container-${side}`));
 
-          const side = calculateSide(ev as DragEvent);
-          const data = (ev as DragEvent).dataTransfer?.getData("text");
+          const side = calculateSide(ev as unknown as DragEvent);
+          const data = (ev as unknown as DragEvent).dataTransfer?.getData("text");
 
-          this.onDrop(side, data ?? "", ev as DragEvent);
+          this.onDrop(side, data ?? "", ev as unknown as DragEvent);
         },
       },
       children: [

@@ -18,7 +18,7 @@
     "vite": "^4.0.0"
   },
   "dependencies": {
-    "@riadh-adrani/dom-control-js": "^1.0.5",
+    "@riadh-adrani/dom-control-js": "^1.0.8",
     "@riadh-adrani/utility-js": "^0.29.2",
     "uuid": "^9.0.0"
   }

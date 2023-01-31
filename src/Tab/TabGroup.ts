@@ -164,7 +164,7 @@ export default class TabGroup {
           this.remove(item.id);
         },
         ondragstart: (e) => {
-          const ev = e as DragEvent;
+          const ev = e;
           e.stopPropagation();
 
           const data = {
@@ -172,7 +172,7 @@ export default class TabGroup {
             __symbol__: TabSymbol.description,
           };
 
-          ev.dataTransfer?.setData("text/plain", JSON.stringify(data));
+          (ev as unknown as DragEvent).dataTransfer?.setData("text/plain", JSON.stringify(data));
         },
       },
     });

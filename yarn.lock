@@ -656,22 +656,23 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@riadh-adrani/dom-control-js@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@riadh-adrani/dom-control-js/-/dom-control-js-1.0.5.tgz#6b09e217911b63c192cb04bfd771dee567cc33f7"
-  integrity sha512-YoT4bB2bQh9OF1J8WXNbFwjVcMCjxdXh8bPGCdDhoJA3PBw6AHKP+InTkEv/YD+vn+4KB4dFcYM5x78oNcw1eg==
+"@riadh-adrani/dom-control-js@^1.0.8":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@riadh-adrani/dom-control-js/-/dom-control-js-1.0.8.tgz#30be31be32708e82736ac66f583b93847271ea4c"
+  integrity sha512-O+ExWDwnZdGN6vUMcfsYQ5kLwLo0gkI++KMc41oxVoSTv3B4jykAbLpFtMILyVmIy80KgQKDzVU4ahM7UVdu7Q==
   dependencies:
-    "@riadh-adrani/utility-js" "^0.20.1"
-
-"@riadh-adrani/utility-js@^0.20.1":
-  version "0.20.1"
-  resolved "https://registry.yarnpkg.com/@riadh-adrani/utility-js/-/utility-js-0.20.1.tgz#240a85f6b6cd3ffe47a5e89456f82b9cae172beb"
-  integrity sha512-z5y/JS9uw3RyY32s7FRzVmOHa25CAu5jlFT3kMM7N0DVH8l1q8sC6V65a8tXvaaQz+tpzUb8M+wn8oslkotQ3Q==
+    "@riadh-adrani/utility-js" "^0.31.0"
+    lodash "^4.17.21"
 
 "@riadh-adrani/utility-js@^0.29.2":
   version "0.29.2"
   resolved "https://registry.yarnpkg.com/@riadh-adrani/utility-js/-/utility-js-0.29.2.tgz#f24e8dffc62529f69aaf702971d3d2700efcb2b8"
   integrity sha512-kEy4/A3FwHSzVL4nRtKH9PeubTqNvjzD1hqd87Yg0V3ORKJDUkyqKYV60sgHH5YL7z4bPbDtGg/7wu57yOYPEQ==
+
+"@riadh-adrani/utility-js@^0.31.0":
+  version "0.31.0"
+  resolved "https://registry.yarnpkg.com/@riadh-adrani/utility-js/-/utility-js-0.31.0.tgz#c9316194bde04b95bfc338a10c1ad2fadfc5fb28"
+  integrity sha512-bMCTBQbuzAABU9b4wqefCUWXiwG93v1fIANvJrbzIGJl0Nf8umcVLsyJPn2IDg2Imktm4r67cRxprGLawvmOyQ==
 
 "@sinclair/typebox@^0.25.16":
   version "0.25.21"
@@ -2057,6 +2058,11 @@ lodash.memoize@4.x:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
   integrity sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==
+
+lodash@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 lru-cache@^5.1.1:
   version "5.1.1"
