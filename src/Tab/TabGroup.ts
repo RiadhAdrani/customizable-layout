@@ -101,6 +101,8 @@ export default class TabGroup {
 
     this.items = newItems;
 
+    // TODO : execute tab hooks + tests
+
     this.events?.onBeforeTabRemove?.(tab, this);
     this.element.querySelector(`#tab-group-btn-${id}`)?.remove();
     this.events?.onTabRemoved?.(tab, this);

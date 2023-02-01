@@ -11,7 +11,18 @@ const tab = () => ({
 
 const layout = new Layout([
   new Layout([tab(), tab()]),
-  new Layout([new Layout([tab(), tab()]), new Layout([tab()])], { isRow: false }),
+  new Layout([new Layout([tab(), tab()]), new Layout([tab()])], {
+    isRow: false,
+    events: {
+      onUnknownDropped() {
+        return {
+          element: () => createElement("button", { children: "Hello World" }),
+          id: useId(),
+          title: "New Title",
+        };
+      },
+    },
+  }),
 ]);
 
 document.querySelector<HTMLDivElement>("#app")!.appendChild(layout.render());

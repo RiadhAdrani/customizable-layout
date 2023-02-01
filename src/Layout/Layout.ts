@@ -174,11 +174,33 @@ export default class Layout {
     }
   }
 
-  removeLayout(id: string) {
+  onBeforeUnmount() {
+    if (!this.forLayout) {
+      this.group?.currentTab?.onBeforeUnmount?.(this.group!);
+    } else {
+      this.items.forEach((layout) => layout.onBeforeUnmount());
+    }
+  }
+
+  onUnmounted() {
+    if (!this.forLayout) {
+      this.group?.currentTab?.onUnmounted?.(this.group!);
+    } else {
+      this.items.forEach((layout) => layout.onUnmounted());
+    }
+  }
+
+  removeLayout(id: string, byEmptyTabGroup: boolean = false) {
     if (!this.forLayout) return;
 
-    if (!this.items.some((layout) => layout.id === id)) {
+    const layout = this.items.find((layout) => layout.id === id);
+
+    if (!layout) {
       throw `Layout with id "${id}" does not exist !`;
+    }
+
+    if (!byEmptyTabGroup) {
+      layout.onBeforeUnmount();
     }
 
     // ? remove layout with id
@@ -190,12 +212,16 @@ export default class Layout {
       if (item.forLayout) {
         this.items = item.items;
         this.isRow = item.isRow;
-
-        this.updateParenthood(this.parent);
       } else {
         // ? if one is remaining, we transform to a tab group
         this.toTabGroup();
       }
+
+      this.updateParenthood(this.parent);
+    }
+
+    if (!byEmptyTabGroup) {
+      layout.onUnmounted();
     }
 
     this.reBuild();
@@ -205,7 +231,7 @@ export default class Layout {
     if (this.forLayout) return;
     if (!this.parent) return;
 
-    this.parent.removeLayout(this.id);
+    this.parent.removeLayout(this.id, true);
   }
 
   onDrop(side: string, data: string, event: DragEvent) {

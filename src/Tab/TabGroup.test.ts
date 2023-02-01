@@ -115,7 +115,7 @@ describe("TabGroup", () => {
     expect(group.contentElement.innerHTML).toBe("<button>New Tab</button>");
   });
 
-  it("should run tab hooks", () => {
+  it("should run mount hooks", () => {
     const stack: Array<string> = [];
 
     group.events = {
@@ -163,7 +163,7 @@ describe("TabGroup", () => {
     expect(group.activeId).toBe("id-2");
   });
 
-  it("should run remove hooks", () => {
+  it("should run unmount hooks", () => {
     const stack: Array<string> = [];
 
     group.events = {

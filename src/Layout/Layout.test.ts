@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeEach } from "@jest/globals";
+import { expect, it, describe, beforeEach, jest } from "@jest/globals";
 import { createElement } from "@riadh-adrani/dom-control-js";
 import { range } from "@riadh-adrani/utility-js";
 import { Tab } from "../Tab/TabGroup";
@@ -6,7 +6,12 @@ import { useId } from "../Utils";
 import Layout from "./Layout";
 
 describe("Layout", () => {
-  const tab = () => ({ element: () => createElement("div"), id: useId(), title: "Dummy Tab" });
+  const tab = (events?: Record<string, () => void>): Tab => ({
+    element: () => createElement("div"),
+    id: useId(),
+    title: "Dummy Tab",
+    ...events,
+  });
 
   describe("constructor", () => {
     it("should create a new layout with a tab group", () => {
@@ -620,5 +625,59 @@ describe("Layout", () => {
     });
   });
 
-  describe("removeLayout", () => {});
+  describe("removeLayout", () => {
+    let onUnmounted: () => unknown;
+    let onBeforeUnmount: () => unknown;
+
+    let child1: Layout;
+    let child2: Layout;
+    let child3: Layout;
+
+    let layout: Layout;
+
+    beforeEach(() => {
+      onUnmounted = jest.fn(() => 1);
+      onBeforeUnmount = jest.fn(() => -1);
+
+      child1 = new Layout([tab()]);
+      child2 = new Layout([tab({ onUnmounted, onBeforeUnmount })]);
+      child3 = new Layout([tab()]);
+      layout = new Layout([child1, child2, child3]);
+
+      layout.render();
+    });
+
+    it("should throw when layout does not exist", () => {
+      expect(() => layout.removeLayout("no-existing-id")).toThrow();
+    });
+
+    it("should remove child from layout", () => {
+      layout.removeLayout(child2.id);
+
+      expect(layout.items.length).toBe(2);
+      expect(layout.items[0].id).toBe(child1.id);
+      expect(layout.items[1].id).toBe(child3.id);
+
+      expect(onUnmounted).toHaveBeenCalledTimes(1);
+      expect(onBeforeUnmount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should transform layout to column", () => {
+      const layout2_1 = new Layout([tab()]);
+      const layout2_2 = new Layout([tab()]);
+
+      const layout1 = new Layout([tab(), tab()]);
+      const layout2 = new Layout([layout2_1, layout2_2], { isRow: false });
+
+      const layout = new Layout([layout1, layout2], { isRow: true });
+      layout.render();
+
+      layout.removeLayout(layout1.id);
+
+      expect(layout.isRow).toBe(false);
+      expect(layout.items.length).toBe(2);
+      expect(layout.items[0] === layout2_1).toBe(true);
+      expect(layout.items[1] === layout2_2).toBe(true);
+    });
+  });
 });

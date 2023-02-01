@@ -656,10 +656,10 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@riadh-adrani/dom-control-js@^1.0.10":
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/@riadh-adrani/dom-control-js/-/dom-control-js-1.0.10.tgz#355511f06e4d63d140c66178b38d0e55115dc821"
-  integrity sha512-jbrovA8mXPBYlAkWRgf5Sey7gN5GO2DPNCzp96Us68pOzJOrge4U74E6dDVBaIMpy4YjHpaUkPeR3DUlHIWEuA==
+"@riadh-adrani/dom-control-js@^1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@riadh-adrani/dom-control-js/-/dom-control-js-1.0.11.tgz#450124476d4684c1c0b75adf6af0ed5adb176b84"
+  integrity sha512-PL44AfTnYjSPEZDQqoQN/LVbMSyyPup93DuKhfnMzQJNlt7u8OIoiLPUsSX71T3Zdh02Xb4DRNw//ta8qYppMg==
   dependencies:
     "@riadh-adrani/utility-js" "^0.31.0"
 
