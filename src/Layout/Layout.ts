@@ -268,19 +268,19 @@ export default class Layout {
     this.element = createElement<HTMLElement>("div", {
       attributes: {
         class: "custom-layout-container",
-        style: `
-        background-color: #2d2d2d;
-        padding: ${this.forLayout ? "0px" : "10px"};
-        border-radius: 10px;
-        display: flex;
-        flex-direction:${this.isRow ? "row" : "column"};
-        flex:1;
-        align-items:stretch;
-        `,
+        style: {
+          backgroundColor: "#2d2d2d",
+          padding: this.forLayout ? "0px" : "10px",
+          borderRadius: "10px",
+          display: "flex",
+          flexDirection: this.isRow ? "row" : "column",
+          flex: 1,
+          alignItems: "stretch",
+        },
       },
       events: {
         ondrag: (ev: Event) => ev.preventDefault(),
-        ondragover: (ev) => {
+        ondragover: (ev: Event) => {
           if (this.forLayout) {
             return;
           }
@@ -299,7 +299,7 @@ export default class Layout {
             target.classList.add(`custom-layout-container-${side}`);
           }
         },
-        ondragleave: (ev) => {
+        ondragleave: (ev: Event) => {
           if (this.forLayout) {
             return;
           }

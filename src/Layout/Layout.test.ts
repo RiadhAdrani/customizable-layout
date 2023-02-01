@@ -298,7 +298,7 @@ describe("Layout", () => {
       let parent: Layout;
       let layout: Layout;
 
-      describe("Parent:Row", () => {
+      describe("parent:Row", () => {
         beforeEach(() => {
           layout = new Layout([tab1, tab2]);
           parent = new Layout([new Layout([tab3]), layout, new Layout([tab4, tab5, tab6])]);
@@ -457,7 +457,7 @@ describe("Layout", () => {
         });
       });
 
-      describe("Parent:Column", () => {
+      describe("parent:Column", () => {
         beforeEach(() => {
           layout = new Layout([tab1, tab2]);
           parent = new Layout([new Layout([tab3]), layout, new Layout([tab4, tab5, tab6])], {
@@ -619,4 +619,6 @@ describe("Layout", () => {
       });
     });
   });
+
+  describe("removeLayout", () => {});
 });
