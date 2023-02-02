@@ -1,10 +1,9 @@
-import { createElement } from "@riadh-adrani/dom-control-js";
+import { createElement } from "../Dom";
 import TabGroup, { Tab, TabGroupEvents } from "../Tab/TabGroup";
 import { calculateSide, useId } from "../Utils";
 
 export interface LayoutEvents extends TabGroupEvents {
-  onUnknownDropped?: (ev: DragEvent) => Tab | void;
-  onTabDropped?: (tab: Tab) => {};
+  onUnknownDropped?: <T = Record<string, string>>(data: T) => Tab | void;
 }
 
 export interface LayoutParams {
@@ -42,20 +41,42 @@ export default class Layout {
     return !this.group && this.items.length > 0;
   }
 
-  constructor(items: Array<Tab | Layout>, params?: LayoutParams) {
+  constructor(items: Array<Tab> | Array<Layout>, params?: LayoutParams) {
     this.events = params?.events;
     this.isRow = params?.isRow ?? true;
     this.parent = params?.parent ?? undefined;
 
-    if (items.every((item) => item instanceof Layout)) {
+    if ((items as Array<Layout>).every((item) => item instanceof Layout)) {
       this.items = items as Array<Layout>;
       this.items.forEach((item) => ((item as Layout).parent = this));
 
       // TODO : deal with the case of one layout
+      this.setEvents();
     } else {
+      const some = (items as Array<Layout>).some((item) => item instanceof Layout);
+
+      if (some) {
+        throw "Cannot mix Layouts and Tabs.";
+      }
+
       this.group = new TabGroup(items as Array<Tab>, this.events);
       this.group.parent = this;
       this.items = [];
+      this.setEvents();
+    }
+  }
+
+  setEvents() {
+    if (this.forLayout) {
+      this.items.forEach((item) => {
+        item.events = this.events;
+
+        item.setEvents();
+      });
+    } else {
+      if (this.group) {
+        this.group.events = this.events;
+      }
     }
   }
 
@@ -207,11 +228,11 @@ export default class Layout {
     this.items = this.items.filter((layout) => layout.id !== id);
 
     if (this.items.length === 1) {
-      const item = this.items[0] as Layout;
+      const single = this.items[0] as Layout;
 
-      if (item.forLayout) {
-        this.items = item.items;
-        this.isRow = item.isRow;
+      if (single.forLayout) {
+        this.items = single.items;
+        this.isRow = single.isRow;
       } else {
         // ? if one is remaining, we transform to a tab group
         this.toTabGroup();
@@ -234,14 +255,19 @@ export default class Layout {
     this.parent.removeLayout(this.id, true);
   }
 
-  onDrop(side: string, data: string, event: DragEvent) {
-    const parsed = JSON.parse(data ?? "") as Record<string, string>;
+  onDrop(side: string, data: string) {
+    let parsed: Record<string, string> = {};
+
+    try {
+      parsed = JSON.parse(data ?? "") as Record<string, string>;
+    } catch {}
+
     const org = this.upmostParent.findTab(parsed.id);
 
     let tab: Tab | null = null;
 
     if (!org) {
-      const $tab = this.events?.onUnknownDropped?.(event);
+      const $tab = this.events?.onUnknownDropped?.(parsed);
 
       if ($tab) {
         tab = $tab;
@@ -252,7 +278,7 @@ export default class Layout {
 
     if (tab) {
       // ? if org.id === this.id and the number of tabs is 1 we don't do anything;
-      if (org!.group.id === this.group!.id && this.group!.items.length === 1) {
+      if (org && org.group.id === this.group!.id && this.group!.items.length === 1) {
         return;
       }
 
@@ -350,7 +376,7 @@ export default class Layout {
           const side = calculateSide(ev as unknown as DragEvent);
           const data = (ev as unknown as DragEvent).dataTransfer?.getData("text");
 
-          this.onDrop(side, data ?? "", ev as unknown as DragEvent);
+          this.onDrop(side, data ?? "");
         },
       },
       children: [

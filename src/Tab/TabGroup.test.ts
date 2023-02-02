@@ -1,5 +1,5 @@
-import { expect, it, beforeEach, describe, jest } from "@jest/globals";
-import { createElement } from "@riadh-adrani/dom-control-js";
+import { expect, it, describe, beforeEach, jest } from "@jest/globals";
+import { createElement } from "../Dom";
 import TabGroup, { Tab } from "./TabGroup";
 
 describe("TabGroup", () => {

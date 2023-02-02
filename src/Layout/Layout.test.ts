@@ -1,13 +1,14 @@
 import { expect, it, describe, beforeEach, jest } from "@jest/globals";
-import { createElement } from "@riadh-adrani/dom-control-js";
 import { range } from "@riadh-adrani/utility-js";
 import { Tab } from "../Tab/TabGroup";
 import { useId } from "../Utils";
 import Layout from "./Layout";
 
+const create = () => document.createElement("div");
+
 describe("Layout", () => {
   const tab = (events?: Record<string, () => void>): Tab => ({
-    element: () => createElement("div"),
+    element: () => create(),
     id: useId(),
     title: "Dummy Tab",
     ...events,
@@ -34,8 +35,7 @@ describe("Layout", () => {
 
   describe("upmostParent && isUpmostParent", () => {
     const tabs = range(5).map(
-      (index) =>
-        ({ element: () => createElement("div"), id: index.toString(), title: "Title" } as Tab)
+      (index) => ({ element: () => create(), id: index.toString(), title: "Title" } as Tab)
     );
 
     const l5_2 = new Layout([tabs[3]]);
@@ -74,8 +74,7 @@ describe("Layout", () => {
 
   describe("findTab", () => {
     const tabs = range(5).map(
-      (index) =>
-        ({ element: () => createElement("div"), id: index.toString(), title: "Title" } as Tab)
+      (index) => ({ element: () => create(), id: index.toString(), title: "Title" } as Tab)
     );
 
     let layout: Layout;
@@ -169,7 +168,7 @@ describe("Layout", () => {
   });
 
   describe("ToTabGroup", () => {
-    it("should throw when the number of layout is more different than one", () => {
+    it("should throw when the number of layout is different than one", () => {
       const layout0 = new Layout([]);
       expect(() => layout0.toTabGroup()).toThrow();
 
@@ -678,6 +677,22 @@ describe("Layout", () => {
       expect(layout.items.length).toBe(2);
       expect(layout.items[0] === layout2_1).toBe(true);
       expect(layout.items[1] === layout2_2).toBe(true);
+    });
+
+    it.skip("should give up layouts if the grand-parent have the same direction as the parent", () => {
+      const layout1 = new Layout([tab()]);
+      const layout2_1 = new Layout([tab()]);
+      const layout2_2_1 = new Layout([tab()]);
+      const layout2_2_2 = new Layout([tab()]);
+      const layout2_2 = new Layout([new Layout([layout2_2_1, layout2_2_2])]);
+      const layout2 = new Layout([layout2_1, layout2_2], { isRow: false });
+
+      const layout = new Layout([layout1, layout2]);
+      layout.render();
+
+      layout2.removeLayout(layout2_1.id);
+
+      expect(layout.items.length).toBe(3);
     });
   });
 });

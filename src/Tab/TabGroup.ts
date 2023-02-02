@@ -1,4 +1,4 @@
-import { createElement, setAttribute } from "@riadh-adrani/dom-control-js";
+import { createElement, setAttribute } from "../Dom";
 import { clamp } from "@riadh-adrani/utility-js";
 import Layout from "../Layout/Layout";
 import { useId } from "../Utils";
@@ -123,9 +123,7 @@ export default class TabGroup {
 
     const tabs = this.element.querySelector(".tab-group-tabs")!;
 
-    const addBtn = this.element.querySelector(".add-tab-btn")!;
-
-    tabs.insertBefore(this.createTabButton(item, false), addBtn);
+    tabs.append(this.createTabButton(item, false));
 
     this.toggle(item.id);
 
@@ -196,26 +194,7 @@ export default class TabGroup {
       children: [
         createElement("nav", {
           attributes: { class: "tab-group-tabs" },
-          children: [
-            ...this.items.map((item) => this.createTabButton(item, this.isActive(item.id))),
-            createElement("button", {
-              children: "+",
-              attributes: {
-                class: "add-tab-btn",
-              },
-              events: {
-                onclick: () => {
-                  const tab: Tab = {
-                    element: () => createElement("div", { children: useId() }),
-                    id: useId(),
-                    title: "Random Tab",
-                  };
-
-                  this.add(tab);
-                },
-              },
-            }),
-          ],
+          children: this.items.map((item) => this.createTabButton(item, this.isActive(item.id))),
         }),
         createElement("div", { attributes: { class: "tab-group-content" }, children: content }),
       ],
